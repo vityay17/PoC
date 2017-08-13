@@ -1,11 +1,13 @@
 package com.mycompany.pocnew;
 
-import java.awt.BorderLayout;
+import com.mycompany.pocnew.canny.CannyForm;
+import com.mycompany.pocnew.kompresja.KompresjaForm;
+import com.mycompany.pocnew.gauss.GaussForm;
+import com.mycompany.pocnew.watermark.WatermarkForm;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.*;
 import java.io.*;
-import java.util.ArrayList;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
@@ -22,26 +24,25 @@ public class POC extends javax.swing.JFrame
     public BufferedImage workImage = null;
     
     // Formatka kontrolna z parametrami konkretnej operacji
-    private BrightnessForm brightnessForm = null;
-    private ContrastForm contrastForm = null;
-    private GammaForm gammaForm = null;
-    
+    GaussForm gaussForm = null;
+    KompresjaForm kompresjaForm = null;
+    CannyForm cannyForm = null;
+    WatermarkForm watermarkForm = null;
     // Komponenty do wyświetlania obrazu na formatce glownej
-    private JLabel imageLabel = null;
-    private ImageIcon imageIcon = null;
+    JLabel imageLabel = null;
+    ImageIcon imageIcon = null;
 
-    public POC()
-    {
+    public POC(){
         setTitle("POC - Imie Nazwisko");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);        
         initComponents();
+//        readImage("lena.bmp");
+//        repaint();
     }
-        
+    
     // Metoda przywracająca oryginalny obraz do obrazu roboczego
-    public void revertImage()
-    {
-        try
-        {
+    public void revertImage(){
+        try{
             originalImage.copyData(workImage.getRaster());
             imageIcon.setImage(workImage);
             imageLabel.setIcon(imageIcon);
@@ -50,10 +51,8 @@ public class POC extends javax.swing.JFrame
     }
 
     // Metoda aktualizujaca oryginalny obraz danymi z obrazu roboczego
-    public void updateImage()
-    {
-        try
-        {
+    public void updateImage(){
+        try{
             workImage.copyData(originalImage.getRaster());
             imageIcon.setImage(workImage);
             imageLabel.setIcon(imageIcon);
@@ -61,10 +60,8 @@ public class POC extends javax.swing.JFrame
     }
 
     // Metoda wczytujaca obraz z pliku i tworzaca na jego podstawie obraz oryginalny i jego kopie robocza
-    public void readImage(String fn)
-    {
-        try
-        {
+    public void readImage(String fn){
+        try{
             // Wczytanie obrazu z pliku
             BufferedImage loadImage = ImageIO.read(new File(fn));
             
@@ -80,14 +77,12 @@ public class POC extends javax.swing.JFrame
             imageIcon = new ImageIcon(workImage);
             imageLabel.setIcon(imageIcon);
             
-        } catch (Exception e)
-        {
+        } catch (Exception e){
             System.out.println("Image read error: " + e.getMessage());
         }
     }
 
-    private void initComponents()
-    {
+    private void initComponents(){
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
@@ -99,22 +94,20 @@ public class POC extends javax.swing.JFrame
 
         JMenuItem mitem = new JMenuItem("Open");
 
-        mitem.addActionListener(new ActionListener()
-        {
+        mitem.addActionListener(new ActionListener(){
             @Override
-            public void actionPerformed(ActionEvent ae)
-            {
-//                JFileChooser fc = new JFileChooser();
-//                int returnVal = fc.showOpenDialog(null);
-//
-//                if (returnVal == JFileChooser.APPROVE_OPTION)
-//                {
-//                    File file = fc.getSelectedFile();
-//                    String fname = file.getPath();
-//                    readImage(fname);
-                    readImage("lena.bmp");
+            public void actionPerformed(ActionEvent ae){
+                JFileChooser fc = new JFileChooser();
+                int returnVal = fc.showOpenDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION)
+                {
+                    File file = fc.getSelectedFile();
+                    String fname = file.getPath();
+                    readImage(fname);
+//                    readImage("lena.bmp");
                     repaint();
-//                }
+                }
             }
         });
         menu.add(mitem);
@@ -132,52 +125,55 @@ public class POC extends javax.swing.JFrame
         });
         menu.add(mitem);
 
-
         menu = new JMenu("Colors");
         menuBar.add(menu);
-        mitem = new JMenuItem("Brightness");
-        mitem.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent ae)
-            {
-                brightnessForm = new BrightnessForm(POC.this);
-                brightnessForm.pack();
-                brightnessForm.setVisible(true);
-            }
-        });
-        menu.add(mitem);
-        
-        mitem = new JMenuItem("Contrast");
-        mitem.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent ae)
-            {
-                contrastForm = new ContrastForm(POC.this);
-                contrastForm.pack();
-                contrastForm.setVisible(true);
-            }
-        });
-        menu.add(mitem);
-        
-        mitem = new JMenuItem("Gamma");
-        mitem.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent ae)
-            {
-                gammaForm = new GammaForm(POC.this);
-                gammaForm.pack();
-                gammaForm.setVisible(true);
-            }
-        });
-        menu.add(mitem);
 
+        mitem = new JMenuItem("Rozmycie Gaussa i Filtry Nieliniowe");
+        mitem.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent ae){
+                gaussForm = new GaussForm(POC.this);
+                gaussForm.pack();
+                gaussForm.setVisible(true);
+            }
+        });
+        menu.add(mitem);
+        
+        mitem = new JMenuItem("Filtr Canny'ego");
+        mitem.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent ae){
+                cannyForm = new CannyForm(POC.this);
+                cannyForm.pack();
+                cannyForm.setVisible(true);
+            }
+        });
+        menu.add(mitem);
+        
+        mitem = new JMenuItem("Kompresja stratna obrazu");
+        mitem.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent ae){
+                kompresjaForm = new KompresjaForm(POC.this);
+                kompresjaForm.pack();
+                kompresjaForm.setVisible(true);
+            }
+        });
+        menu.add(mitem);
+        
+        mitem = new JMenuItem("Znakowanie wodne");
+        mitem.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent ae){
+                watermarkForm = new WatermarkForm(POC.this);
+                watermarkForm.pack();
+                watermarkForm.setVisible(true);
+            }
+        });
+        menu.add(mitem);
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args){
         POC main = new POC();
         main.setVisible(true);
         main.setSize(800, 600);
