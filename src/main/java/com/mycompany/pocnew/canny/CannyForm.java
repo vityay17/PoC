@@ -19,40 +19,10 @@ public class CannyForm extends javax.swing.JFrame
 
     // W konstruktorze dla ulatwienia podaje obiekt POC - zeby miec dostep do obrazow oryginalnego i roboczego
     // To jest rozwiazanie malo eleganckie i przy rozbudowie powinno zostac zastapione odpowiednimi interfejsami
-    public CannyForm(POC parent)
-    {
+    public CannyForm(POC parent){
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
         this.parent = parent;
         initComponents();
-    }
-
-    // Metoda modyfikujaca wszystkie piksele obrazu src i zapisujaca je do obrazu dst
-    void processImage(BufferedImage src, BufferedImage dst, int db)
-    {
-        // Pobranie referencji na bufor z pikselami obrazu zrodlowego i docelowego 
-        // Dzieki temu uzyskuje sie bezposredni dostep do ich wartosci
-        DataBufferInt sbuff = (DataBufferInt) src.getRaster().getDataBuffer();
-        DataBufferInt dbuff = (DataBufferInt) dst.getRaster().getDataBuffer();
-        int[] sp = sbuff.getData();
-        int[] dp = dbuff.getData();
-        
-        
-        // Iteracja po wszystkich pikselach obrazu i przeliczenie kazdego z nich za pomoca funkcji changeBrightness()
-        int i = 0;
-        for (int y = 0; y < src.getHeight(); ++y)
-        {
-            for (int x = 0; x < src.getWidth(); ++x)
-            {
-                dp[i] = ImageAlgorithms.changeBrightness(sp[i], db);
-                
-                // Ewentualnie inny zapis tylko na buforach:
-                    //dbuff.setElem(i, ImageUtils.changeBrightness(sbuff.getElem(i), db));
-             
-                i++;
-            }
-        }
-
     }
 
     /**
@@ -80,7 +50,7 @@ public class CannyForm extends javax.swing.JFrame
         jLabelImage = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
-        setTitle("Brightness");
+        setTitle("Canny filter");
         setMinimumSize(new java.awt.Dimension(300, 100));
 
         cancelButton.setText("Anuluj");
@@ -204,6 +174,9 @@ public class CannyForm extends javax.swing.JFrame
                 .addContainerGap())
         );
 
+        getAccessibleContext().setAccessibleName("Canny filter");
+        getAccessibleContext().setAccessibleDescription("");
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -231,36 +204,19 @@ public class CannyForm extends javax.swing.JFrame
 
     public void startCanny() {
         edgeDetector = new CannyService();
-        edgeDetector.setSourceImage(parent.workImage);
-        edgeDetector.setGaussKernel(Integer.valueOf(jTextFieldMaska.getText()).intValue());
-        edgeDetector.setHighThreshold(Integer.valueOf(jTextFieldGornyProg.getText()).intValue());
-        edgeDetector.setLowThreshold(Integer.valueOf(jTextFieldNizszyProg.getText()).intValue());
-        edgeDetector.setSigma(Float.valueOf(jTextFieldOdchylenie.getText()).floatValue());
-        
-        try {
-            edgeDetector.process();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Image edgeImage = edgeDetector.getEdgeImage();
-
+        edgeDetector.sourceImage = parent.workImage;
+        edgeDetector.widGaussianKernel = Integer.valueOf(jTextFieldMaska.getText()).intValue();
+        edgeDetector.threshold1 = Integer.valueOf(jTextFieldGornyProg.getText()).intValue();
+        edgeDetector.threshold2 = Integer.valueOf(jTextFieldNizszyProg.getText()).intValue();
+        edgeDetector.sigma = Float.valueOf(jTextFieldOdchylenie.getText()).floatValue();
+        edgeDetector.process();
+        Image edgeImage = edgeDetector.edgeImage;
         showOutputImage(edgeImage);
     }
     
     public void showOutputImage(Image img) {
-//        jLabelImage.add(new ImageIcon(img));
-//         imageIcon.setImage(img);
         jLabelImage.setIcon(new ImageIcon(img));
         jLabelImage.repaint();
-//        outputImage.setPreferredSize(new Dimension(300, 300));
-//        panel.add(outputImage);
-//        outputImage.repaint();
-//        this.repaint();
-//        pan.repaint();
-//        frame1.setContentPane(pan);
-//        frame1.pack();
-//        frame1.show();
     }
     
     

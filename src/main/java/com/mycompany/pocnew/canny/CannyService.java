@@ -16,28 +16,28 @@ class CannyService extends Component {
     public static final double MAG_SCALE = 20.0D;
 
     final float ORIENT_SCALE = 40F;
-    private int height;
-    private int width;
-    private int picsize;
-    private int data[];
-    private int derivative_mag[];
-    private int magnitude[];
-    private int orientation[];
-    private Image sourceImage;
-    private Image edgeImage;
-    private int threshold1;
-    private int threshold2;
-    private int threshold;
-    private int widGaussianKernel;
-    private float sigma;
+    int height;
+    int width;
+    int picsize;
+    int data[];
+    int derivative_mag[];
+    int magnitude[];
+    int orientation[];
+    Image sourceImage;
+    Image edgeImage;
+    int threshold1;
+    int threshold2;
+    int threshold;
+    int widGaussianKernel;
+    float sigma;
     int j1;
 
     public CannyService() {
         threshold1 = 10;
         threshold2 = 1;
-        setThreshold(128);
-        setGaussKernel(3);
-        setSigma((float) 1.0);
+        threshold = 128;
+        widGaussianKernel = 3;
+        sigma = (float) 1.0;
     }
 
     public void process(){
@@ -59,9 +59,7 @@ class CannyService extends Component {
         orientation = new int[picsize];
 
         canny(sigma, widGaussianKernel);
-
         thresholding(threshold1, threshold2);
-
         for (int i = 0; i < picsize; i++) {
             if (data[i] <= threshold)
                 data[i] = 0xff000000;
@@ -106,7 +104,6 @@ class CannyService extends Component {
             af5[k4] = gauss((float) k4 + 0.5F, f) - gauss((float) k4 - 0.5F, f);
             k4++;
         } while (true);
-
 
         int j = k4;
         j1 = width - (j - 1);
@@ -204,7 +201,6 @@ class CannyService extends Component {
 
                 // wyliczenie non maximum
                 if (tmp1 * tmp2 <= 0) {
-
                     if (Math.abs(tmp1) >= Math.abs(tmp2)) {
                         if (Math.abs(tmp1 * f12) >= Math.abs(tmp2 * tmp8 - (tmp1 + tmp2) * tmp6) && Math.abs(tmp1 * f12) > Math.abs(tmp2 * tmp9 - (tmp1 + tmp2) * tmp5)) {
                             vabene = true;
@@ -251,7 +247,7 @@ class CannyService extends Component {
 
     private void thresholding(int i, int j) {
         if (i < j) {
-            System.out.println("Bląd: gorna granica jest mniejsza od dolnej granicy!");
+            GUIElements.showMessage("Bląd: gorna granica jest mniejsza od dolnej granicy!");
         } else {
             for (int k = 0; k < picsize; k++)
                 data[k] = 0;
@@ -348,38 +344,5 @@ class CannyService extends Component {
                 ai[i2] = ai[i2] & 0xff;
         }
         return ai;
-    }
-
-    public void setSourceImage(Image image) {
-        sourceImage = image;
-    }
-
-    public Image getEdgeImage() {
-        return edgeImage;
-    }
-
-    public void setThreshold(int i) {
-        threshold = i;
-        System.out.println("Threshold: " + i);
-    }
-
-    public void setHighThreshold(int i) {
-        threshold1 = i;
-        System.out.println("High Threshold: " + i);
-    }
-
-    public void setLowThreshold(int i) {
-        threshold2 = i;
-        System.out.println("Low Threshold: " + i);
-    }
-
-    public void setGaussKernel(int i) {
-        widGaussianKernel = i;
-        System.out.println("Gauss kernel: " + i);
-    }
-
-    public void setSigma(float i) {
-        sigma = i;
-        System.out.println("Sigma: " + i);
     }
 }
