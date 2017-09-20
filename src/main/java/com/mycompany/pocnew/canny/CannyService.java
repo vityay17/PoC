@@ -16,28 +16,28 @@ class CannyService extends Component {
     public static final double MAG_SCALE = 20.0D;
 
     final float ORIENT_SCALE = 40F;
-    private int height;
-    private int width;
-    private int picsize;
-    private int data[];
-    private int derivative_mag[];
-    private int magnitude[];
-    private int orientation[];
-    private Image sourceImage;
-    private Image edgeImage;
-    private int threshold1;
-    private int threshold2;
-    private int threshold;
-    private int widGaussianKernel;
-    private float sigma;
+    int height;
+    int width;
+    int picsize;
+    int data[];
+    int derivative_mag[];
+    int magnitude[];
+    int orientation[];
+    Image sourceImage;
+    Image edgeImage;
+    int threshold1;
+    int threshold2;
+    int threshold;
+    int widGaussianKernel;
+    float sigma;
     int j1;
 
     public CannyService() {
         threshold1 = 10;
         threshold2 = 1;
-        setThreshold(128);
-        setGaussKernel(3);
-        setSigma((float) 1.0);
+        threshold = 128;
+        widGaussianKernel = 3;
+        sigma = (float) 1.0;
     }
 
     public void process(){
@@ -59,9 +59,9 @@ class CannyService extends Component {
         orientation = new int[picsize];
 
         canny(sigma, widGaussianKernel);
-
+        //Трассировка области неоднозначности. 
+        //Итоговые границы определяются путём подавления всех краёв, несвязанных с определенными (сильными) границами.
         thresholding(threshold1, threshold2);
-
         for (int i = 0; i < picsize; i++) {
             if (data[i] <= threshold)
                 data[i] = 0xff000000;
@@ -94,6 +94,7 @@ class CannyService extends Component {
 
         //Obliczenie wartości dyskretnych
         //rozkład Gaussa
+        //Сглаживание. Размытие изображения для удаления шума.
         do {
             if (k4 >= gkernel)
                 break;
@@ -106,8 +107,8 @@ class CannyService extends Component {
             af5[k4] = gauss((float) k4 + 0.5F, f) - gauss((float) k4 - 0.5F, f);
             k4++;
         } while (true);
-
-
+        
+        //Поиск градиентов. Границы отмечаются там, где градиент изображения приобретает максимальное значение.
         int j = k4;
         j1 = width - (j - 1);
         int l = width * (j - 1);
@@ -125,17 +126,14 @@ class CannyService extends Component {
 
                 for (int i8 = k1 + width; l6 < j; i8 += width) {
                     tmp1 += meanGauss[l6] * (float) (data[k7] + data[i8]);
-                    tmp2 += meanGauss[l6]
-                            * (float) (data[k1 - l6] + data[k1 + l6]);
+                    tmp2 += meanGauss[l6] * (float) (data[k1 - l6] + data[k1 + l6]);
                     l6++;
                     k7 -= width;
                 }
-
                 convy[k1] = tmp1;
                 convx[k1] = tmp2;
             }
         }
-
 
         float sconvy[] = new float[picsize];
         for (int i5 = j - 1; i5 < j1; i5++) {
@@ -144,7 +142,6 @@ class CannyService extends Component {
                 int l1 = i5 + i6;
                 for (int i7 = 1; i7 < j; i7++)
                     tmp1 += af5[i7] * (convy[l1 - i7] - convy[l1 + i7]);
-
                 sconvy[l1] = tmp1;
             }
         }
@@ -162,11 +159,12 @@ class CannyService extends Component {
                 }
                 sconvx[i2] = tmp1;
             }
-
         }
         convx = null;
 
         //Non-maximum suppression
+        //Подавление не-максимумов. Только локальные максимумы отмечаются как границы.
+        //Двойная пороговая фильтрация. Потенциальные границы определяются порогами.
         j1 = width - j;
         l = width * j;
         i1 = width * (height - j);
@@ -204,7 +202,6 @@ class CannyService extends Component {
 
                 // wyliczenie non maximum
                 if (tmp1 * tmp2 <= 0) {
-
                     if (Math.abs(tmp1) >= Math.abs(tmp2)) {
                         if (Math.abs(tmp1 * f12) >= Math.abs(tmp2 * tmp8 - (tmp1 + tmp2) * tmp6) && Math.abs(tmp1 * f12) > Math.abs(tmp2 * tmp9 - (tmp1 + tmp2) * tmp5)) {
                             vabene = true;
@@ -250,12 +247,11 @@ class CannyService extends Component {
     }
 
     private void thresholding(int i, int j) {
-        if (i < j) {
-            System.out.println("Bląd: gorna granica jest mniejsza od dolnej granicy!");
-        } else {
+        if (i < j)
+            GUIElements.showMessage("Bląd: gorna granica jest mniejsza od dolnej granicy!");
+        else {
             for (int k = 0; k < picsize; k++)
                 data[k] = 0;
-
             for (int l = 0; l < width; l++) {
                 for (int i1 = 0; i1 < height; i1++)
                     if (magnitude[l + width * i1] >= i)
@@ -348,38 +344,5 @@ class CannyService extends Component {
                 ai[i2] = ai[i2] & 0xff;
         }
         return ai;
-    }
-
-    public void setSourceImage(Image image) {
-        sourceImage = image;
-    }
-
-    public Image getEdgeImage() {
-        return edgeImage;
-    }
-
-    public void setThreshold(int i) {
-        threshold = i;
-        System.out.println("Threshold: " + i);
-    }
-
-    public void setHighThreshold(int i) {
-        threshold1 = i;
-        System.out.println("High Threshold: " + i);
-    }
-
-    public void setLowThreshold(int i) {
-        threshold2 = i;
-        System.out.println("Low Threshold: " + i);
-    }
-
-    public void setGaussKernel(int i) {
-        widGaussianKernel = i;
-        System.out.println("Gauss kernel: " + i);
-    }
-
-    public void setSigma(float i) {
-        sigma = i;
-        System.out.println("Sigma: " + i);
     }
 }
